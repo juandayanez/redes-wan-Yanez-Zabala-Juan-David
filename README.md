@@ -1,7 +1,7 @@
 # Proyecto Corte 2: Automatización de Redes y Ciberdefensa
 
 **Autor:** Juan David Yañez Zabala  
-**Enlace del Repositorio:** https://github.com/juandayanez/Proyecto-Automatizaci-n-de-Redes-y-Ciberdefensa-JDYZ 
+**Enlace del Repositorio:** https://github.com/juandayanez/redes-wan-Yanez-Zabala-Juan-David
 
 ## Descripción
 Herramienta web interactiva desarrollada en HTML, CSS y JavaScript para la automatización del diseño de redes corporativas. El sistema permite planificar subredes, visualizar topologías jerárquicas y generar configuraciones de enrutamiento y seguridad para múltiples plataformas (Cisco, Huawei, Fortinet y MikroTik), aplicando principios de ciberdefensa.
