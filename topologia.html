@@ -3,74 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Topología, Scripts y Ciberdefensa</title>
+    <title>Network Builder Pro - Ciberdefensa</title>
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
+        /* Paleta de colores moderna y variables */
         :root {
-            --primary: #2563eb; --primary-hover: #1d4ed8;
-            --bg-color: #f1f5f9; --surface: #ffffff;
-            --text-main: #1e293b; --border: #e2e8f0;
-            --danger: #ef4444; --success: #10b981;
+            --primary: #4f46e5; /* Indigo moderno */
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6; /* Gris muy suave para el fondo */
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
         }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 300px; background-color: var(--surface); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; z-index: 10; }
-        .sidebar h2 { margin-top: 0; font-size: 1.3rem; color: var(--primary); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-        .form-group input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
-        .btn-action { background-color: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 20px; transition: 0.2s; }
-        .btn-action:hover { background-color: var(--primary-hover); }
-        .menu-modulos { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .tab-btn { background: transparent; border: 1px solid var(--border); padding: 10px; border-radius: 6px; cursor: pointer; text-align: left; font-weight: 600; color: var(--text-main); transition: 0.2s; }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .tab-btn:hover:not(.active) { background: #f8fafc; }
-        .main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
-        .modulo { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); flex-grow: 1; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); height: 100%; }
-        .modulo.active { display: flex; }
-        .modulo-header { padding: 15px 20px; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 1.1rem; }
-        #network-canvas { width: 100%; height: 100%; min-height: 500px; flex-grow: 1; background-color: #fafafa; }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            flex-direction: column; /* Cambio clave: Diseño en columna (arriba hacia abajo) */
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* --- NAVEGACIÓN SUPERIOR (NAVBAR) --- */
+        .top-navbar {
+            background-color: var(--surface);
+            padding: 0 24px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            z-index: 20;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-modulos {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn:hover {
+            background: #f3f4f6;
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: #eef2ff;
+            color: var(--primary);
+        }
+
+        /* --- PANEL DE CONTROL HORIZONTAL --- */
+        .toolbar {
+            background-color: var(--surface);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        .form-group-inline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group-inline label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .form-group-inline input {
+            width: 80px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group-inline input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-action {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-action:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* El scroll lo manejan los módulos internos */
+        }
+
+        .modulo {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            flex-grow: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            height: 100%;
+        }
+
+        .modulo.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modulo-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            font-size: 1.1rem;
+            background-color: #fafafa;
+        }
+
+        /* --- MÓDULOS ESPECÍFICOS --- */
+        #network-canvas { width: 100%; height: 100%; min-height: 400px; flex-grow: 1; background-color: #ffffff; }
+        
         .table-container { flex-grow: 1; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); text-align: left; }
-        th { background-color: #f8fafc; position: sticky; top: 0; z-index: 1; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        th, td { padding: 14px 24px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background-color: #f9fafb; position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        tr:hover td { background-color: #f3f4f6; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
         .badge.active { background: #d1fae5; color: #065f46; }
         .badge.inactive { background: #fee2e2; color: #991b1b; }
-        .btn-toggle { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: white; }
+
+        .btn-toggle { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: white; transition: 0.2s; }
+        .btn-toggle:hover { opacity: 0.9; }
         .btn-toggle.disable { background-color: var(--danger); }
         .btn-toggle.enable { background-color: var(--success); }
-        .total-budget { padding: 20px; text-align: right; font-size: 1.2rem; font-weight: bold; background: #f8fafc; border-top: 1px solid var(--border); }
-        #script-output { flex-grow: 1; font-family: 'Consolas', monospace; padding: 15px; background: #1e1e1e; color: #4ade80; border-radius: 6px; resize: none; border: none; font-size: 14px; white-space: pre-wrap; margin-top: 15px;}
+
+        .total-budget { padding: 24px; text-align: right; font-size: 1.3rem; font-weight: 800; background: #f9fafb; border-top: 1px solid var(--border); color: var(--primary); }
+        
+        #script-output { flex-grow: 1; font-family: 'Fira Code', 'Consolas', monospace; padding: 20px; background: #0f172a; color: #38bdf8; border-radius: 8px; resize: none; border: none; font-size: 14px; white-space: pre-wrap; margin-top: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <h2>Network Builder Pro</h2>
-        
-        <div class="form-group">
-            <label for="pisos">Cantidad de Pisos:</label>
-            <input type="number" id="pisos" min="1" max="20" value="3">
-        </div>
-        <div class="form-group">
-            <label for="usuarios">Total de Usuarios (PCs):</label>
-            <input type="number" id="usuarios" min="1" max="200" value="10">
+    <!-- NAVEGACIÓN SUPERIOR -->
+    <header class="top-navbar">
+        <div class="brand">
+            🌐 Network Builder Pro
         </div>
         
-        <button class="btn-action" onclick="generarInfraestructura()">Construir / Actualizar Red</button>
-
-        <hr style="border:0; border-top: 1px solid var(--border); margin: 20px 0;">
-        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 10px; display: block;">Módulos del Sistema:</label>
-        
-        <div class="menu-modulos">
+        <nav class="menu-modulos">
             <button id="btn-grafico" class="tab-btn active" onclick="cambiarModulo('grafico')">📍 Topología Lógica</button>
             <button id="btn-inventario" class="tab-btn" onclick="cambiarModulo('inventario')">📋 IP Planning (IPv4/v6)</button>
             <button id="btn-scripts" class="tab-btn" onclick="cambiarModulo('scripts')">🛡️ Ciberdefensa y Scripts</button>
             <button id="btn-presupuesto" class="tab-btn" onclick="cambiarModulo('presupuesto')">💰 Presupuesto Comercial</button>
-        </div>
-    </aside>
+        </nav>
+    </header>
 
+    <!-- PANEL DE CONTROL HORIZONTAL -->
+    <section class="toolbar">
+        <div class="form-group-inline">
+            <label for="pisos">Pisos (VLANs):</label>
+            <input type="number" id="pisos" min="1" max="20" value="3">
+        </div>
+        <div class="form-group-inline">
+            <label for="usuarios">Total de PCs:</label>
+            <input type="number" id="usuarios" min="1" max="200" value="10">
+        </div>
+        <div style="flex-grow: 1;"></div> <!-- Empuja el botón a la derecha -->
+        <button class="btn-action" onclick="generarInfraestructura()">⚡ Construir Infraestructura</button>
+    </section>
+
+    <!-- CONTENEDOR PRINCIPAL -->
     <main class="main-content">
+        
         <!-- Módulo 1: Gráfico -->
         <div id="mod-grafico" class="modulo active">
             <div class="modulo-header">Visualización de Arquitectura Multicapa</div>
@@ -101,31 +262,31 @@
         <!-- Módulo 3: Scripts y Ciberdefensa -->
         <div id="mod-scripts" class="modulo">
             <div class="modulo-header">Generador Multi-Fabricante y Ciberdefensa Zero Trust</div>
-            <div style="padding: 20px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
+            <div style="padding: 24px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
                 <div style="display: flex; gap: 15px; align-items: center;">
-                    <label style="font-weight: bold;">Seleccionar Equipo/Fabricante:</label>
-                    <select id="vendor-select" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); flex-grow: 1;">
+                    <label style="font-weight: 600;">Seleccionar Equipo/Fabricante:</label>
+                    <select id="vendor-select" style="padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); flex-grow: 1; font-size: 0.95rem; outline: none;">
                         <option value="cisco">Router Core - Cisco IOS</option>
                         <option value="huawei">Switches de Acceso - Huawei VRP</option>
                         <option value="fortinet">Firewall Perimetral - Fortinet FortiOS</option>
                         <option value="mikrotik">Router de Borde - MikroTik RouterOS</option>
                     </select>
-                    <button class="btn-action" style="width: auto; margin: 0; background: var(--text-main);" onclick="generarScripts()">Generar Código</button>
+                    <button class="btn-action" style="margin: 0; background: var(--text-main);" onclick="generarScripts()">Generar CLI</button>
                 </div>
-                <textarea id="script-output" readonly placeholder="Haz clic en 'Generar Código' para compilar la configuración..."></textarea>
+                <textarea id="script-output" readonly placeholder="Haz clic en 'Generar CLI' para compilar la configuración de red y seguridad..."></textarea>
             </div>
         </div>
 
         <!-- Módulo 4: Presupuesto -->
         <div id="mod-presupuesto" class="modulo">
-            <div class="modulo-header">Presupuesto (Mercado Libre Colombia)</div>
+            <div class="modulo-header">Presupuesto Comercial (Mercado Libre Colombia)</div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>Equipo</th>
                             <th>Fabricante / Modelo de Referencia</th>
-                            <th>Cant. Activa</th>
+                            <th style="text-align: center;">Cant. Activa</th>
                             <th>Valor Unitario (COP)</th>
                             <th>Subtotal (COP)</th>
                         </tr>
@@ -140,6 +301,7 @@
     </main>
 
     <script>
+        // --- LOGICA DE PROGRAMACIÓN (Igual, adaptada para el nuevo diseño) ---
         let redGlobal = [];
         let visNetwork = null;
 
@@ -192,7 +354,7 @@
                 }
             }
             actualizarVistas();
-            document.getElementById('script-output').value = ""; // Limpiar textarea al generar nueva red
+            document.getElementById('script-output').value = ""; 
         }
 
         function toggleDispositivo(id) {
@@ -219,7 +381,7 @@
 
             const container = document.getElementById('network-canvas');
             const data = { nodes: nodes, edges: edges };
-            const options = { layout: { hierarchical: { direction: 'UD', sortMethod: 'directed', levelSeparation: 120, nodeSpacing: 100 } }, physics: false, nodes: { font: { size: 12, color: '#1e293b', face: 'Segoe UI' } } };
+            const options = { layout: { hierarchical: { direction: 'UD', sortMethod: 'directed', levelSeparation: 120, nodeSpacing: 100 } }, physics: false, nodes: { font: { size: 12, color: '#1e293b', face: 'Inter' } } };
             
             if (visNetwork !== null) visNetwork.destroy();
             visNetwork = new vis.Network(container, data, options);
@@ -251,7 +413,6 @@
             document.getElementById('presupuesto-total').innerText = formatoMoneda(granTotal);
         }
 
-        // --- LÓGICA DE CIBERDEFENSA Y SCRIPTS (NUEVO) ---
         function generarScripts() {
             const vendor = document.getElementById('vendor-select').value;
             const numPisos = parseInt(document.getElementById('pisos').value);
